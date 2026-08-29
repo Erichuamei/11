@@ -1,0 +1,1954 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>表11 协作反馈</title>
+  <style>
+    :root { --bg:#f4f5f7; --card:#fff; --line:#dfe3e8; --accent:#6b4ce6; --text:#1f2937; }
+    * { box-sizing: border-box; }
+    body { margin:0; font:14px/1.45 "Microsoft YaHei UI", sans-serif; background:var(--bg); color:var(--text); }
+    .wrap { max-width: 100%; padding: 16px 20px 32px; }
+    h1 { margin:0 0 8px; font-size:20px; }
+    .sub { color:#64748b; margin-bottom:16px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+    .gate { max-width:420px; margin:80px auto; }
+    .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:12px; }
+    label { font-weight:600; }
+    input, select, button { font:inherit; padding:8px 10px; border:1px solid var(--line); border-radius:8px; }
+    input[type=text], input[type=password] { min-width:220px; }
+    button { cursor:pointer; background:#fff; }
+    button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+    button.danger { color:#dc2626; border-color:#fecaca; }
+    button.danger:hover { background:#fef2f2; }
+    .role-tag { font-size:12px; font-weight:600; color:#64748b; padding:2px 8px; border-radius:6px; background:#f1f5f9; }
+    .role-tag.admin { color:#b45309; background:#fffbeb; }
+    .status { min-height:22px; color:#64748b; }
+    .status.err { color:#dc2626; }
+    .status.ok { color:#059669; }
+    .formula-bar {
+      display:flex; align-items:stretch; flex-shrink:0;
+      background:#fff; border:1px solid var(--line); border-radius:8px;
+      margin-bottom:10px; min-height:28px; overflow:hidden;
+    }
+    .formula-addr {
+      flex:0 0 200px; max-width:280px; padding:0 8px;
+      display:flex; align-items:center; border-right:1px solid var(--line);
+      background:#f8fafc; color:#64748b; white-space:nowrap;
+      overflow:hidden; text-overflow:ellipsis; font-size:11px; user-select:none;
+    }
+    .formula-input-wrap { flex:1; min-width:0; display:flex; align-items:center; }
+    #cellFormula {
+      width:100%; min-height:28px; max-height:120px; border:0; padding:4px 8px;
+      font:inherit; resize:none; overflow:auto; background:#fff; outline:none;
+      line-height:1.35; white-space:pre-wrap; word-break:break-all;
+    }
+    #cellFormula:focus { box-shadow:inset 0 0 0 1px rgba(107,76,230,0.45); }
+    .formula-copy {
+      flex-shrink:0; border:0; border-left:1px solid var(--line); border-radius:0;
+      padding:0 12px; background:#f8fafc; color:#475569; cursor:pointer;
+    }
+    .formula-copy:hover { background:#eef2ff; color:var(--accent); }
+    .formula-copy:disabled { opacity:.45; cursor:not-allowed; }
+    .table-wrap { overflow:auto; border:1px solid var(--line); border-radius:8px; background:#fff; max-height: calc(100vh - 280px); }
+    table { border-collapse:collapse; table-layout:fixed; }
+    th, td {
+      border-bottom:1px solid #eef1f4; padding:6px 8px; vertical-align:middle;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      box-sizing:border-box;
+    }
+    th { position:sticky; top:0; background:#f8fafc; z-index:2; text-align:left; font-size:12px; }
+    th .th-inner { display:flex; align-items:center; gap:2px; min-width:0; padding-right:8px; }
+    th .th-label { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; cursor:pointer; user-select:none; }
+    th .th-label:hover { color:var(--accent); }
+    th .th-label.sorted { color:var(--accent); font-weight:600; }
+    th .sort-ind { flex-shrink:0; font-size:10px; color:var(--accent); width:12px; text-align:center; }
+    th .col-filter-btn {
+      flex-shrink:0; border:0; background:transparent; padding:0 2px; cursor:pointer;
+      font-size:11px; line-height:1; color:#94a3b8; border-radius:4px;
+    }
+    th .col-filter-btn:hover { color:var(--accent); background:#eef2ff; }
+    th .col-filter-btn.active { color:var(--accent); font-weight:700; }
+    th .col-resize { position:absolute; top:0; right:0; width:7px; height:100%; cursor:col-resize; z-index:3; touch-action:none; }
+    th .col-resize::after { content:""; position:absolute; top:20%; bottom:20%; right:2px; width:2px; border-radius:1px; background:transparent; transition:background .15s; }
+    th .col-resize:hover::after, body.col-resizing th .col-resize::after { background:#94a3b8; }
+    body.col-resizing { cursor:col-resize !important; user-select:none !important; }
+    body.col-resizing * { cursor:col-resize !important; }
+    td.cell-selected { box-shadow:inset 0 0 0 2px rgba(107,76,230,0.55); background:#f5f3ff !important; }
+    td.editable input {
+      display:block; width:100%; min-width:0; max-width:100%;
+      border:0; background:transparent; padding:0; margin:0;
+      font:inherit; color:inherit; outline:none;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    td.editable input:focus { background:rgba(255,255,255,0.6); }
+    tr:hover td { background:#fafbff; }
+    tr:hover td.cell-selected { background:#f5f3ff !important; }
+    .hidden { display:none !important; }
+    .col-filter-pop {
+      position:fixed; z-index:1000; width:min(420px, calc(100vw - 16px));
+      max-height:min(520px, calc(100vh - 16px)); background:#fff; border:1px solid var(--line);
+      border-radius:10px; box-shadow:0 8px 32px rgba(15,23,42,0.14); display:flex; flex-direction:column;
+    }
+    .col-filter-pop[hidden] { display:none !important; }
+    .col-filter-head {
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      padding:10px 12px; border-bottom:1px solid var(--line); font-size:13px;
+    }
+    .col-filter-tools { display:flex; gap:6px; flex-wrap:wrap; padding:8px 12px; border-bottom:1px solid #eef1f4; }
+    .col-filter-tools input[type=search] { flex:1; min-width:120px; }
+    .col-filter-list { overflow:auto; padding:6px 0; max-height:360px; }
+    .col-filter-item {
+      display:flex; align-items:center; gap:8px; padding:4px 12px; cursor:pointer; font-size:13px;
+    }
+    .col-filter-item:hover { background:#f8fafc; }
+    .col-filter-item .cnt { margin-left:auto; color:#94a3b8; font-size:12px; }
+    .col-filter-foot {
+      display:flex; justify-content:flex-end; gap:8px; padding:10px 12px; border-top:1px solid var(--line);
+    }
+    .filter-clear-link { margin-left:auto; font-size:12px; color:#64748b; cursor:pointer; text-decoration:underline; }
+    td.relate-po-sel-inactive input.relate-po-input {
+      background: #f1f5f9 !important;
+    }
+    td.confirm-sku-sel-inactive { background: #f1f5f9 !important; }
+    td.confirm-sku-sel-inactive input.confirm-sku-input { background: transparent !important; }
+    td.confirm-sku-sel-top { box-shadow: inset 0 2px 0 0 #6b4ce6, inset 2px 0 0 0 #6b4ce6, inset -2px 0 0 0 #6b4ce6; }
+    td.confirm-sku-sel-btm { box-shadow: inset 0 -2px 0 0 #6b4ce6, inset 2px 0 0 0 #6b4ce6, inset -2px 0 0 0 #6b4ce6; }
+    td.confirm-sku-sel-mid { box-shadow: inset 2px 0 0 0 #6b4ce6, inset -2px 0 0 0 #6b4ce6; }
+    td.confirm-sku-sel-single { box-shadow: inset 0 0 0 2px #6b4ce6; }
+    tr.virtual-spacer td { padding: 0 !important; border: none !important; background: transparent !important; }
+    td.confirm-sku-cell input.confirm-sku-input {
+      display:block; width:100%; min-width:0; border:0; background:transparent;
+      padding:0; margin:0; font:inherit; outline:none;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    td.confirm-sku-cell input.confirm-sku-input:focus { background:rgba(255,255,255,0.6); }
+    body.confirm-sku-selecting { user-select:none; cursor:default; }
+  </style>
+</head>
+<body>
+  <div id="gate" class="wrap gate card">
+    <h1>表11 协作反馈</h1>
+    <p class="sub">请输入站点密码：运营可编辑协作列；管理员可清除云端数据</p>
+    <div class="row">
+      <input type="password" id="gatePwd" placeholder="站点密码" />
+      <button type="button" class="primary" id="btnGate">进入</button>
+    </div>
+    <div id="gateStatus" class="status"></div>
+  </div>
+
+  <div id="app" class="wrap hidden">
+    <div class="card">
+      <h1>表11 协作反馈</h1>
+      <p class="sub">列与表11 推送一致；点列名排序 · ▾ 筛选；运营确认SKU 支持多选粘贴/Delete</p>
+      <div class="row">
+        <label>绑定平台
+          <select id="bindPrefix"></select>
+        </label>
+        <input type="text" id="searchBox" placeholder="搜索全部列（含店长、店铺、订单编号等）" />
+        <button type="button" id="btnClearFilters" title="清除列筛选、搜索，恢复默认排序">清除筛选</button>
+        <button type="button" class="primary" id="btnReload">刷新</button>
+        <button type="button" id="btnClearCloud" class="danger hidden" title="删除当前绑定平台在 Supabase 中的全部协作行">清除本平台云端</button>
+        <span id="roleTag" class="role-tag hidden"></span>
+        <button type="button" id="btnLogout">退出</button>
+      </div>
+      <div id="appStatus" class="status"></div>
+    </div>
+    <div class="formula-bar" title="类似 Excel 编辑栏，单击单元格查看完整内容">
+      <div class="formula-addr" id="cellAddr">—</div>
+      <div class="formula-input-wrap">
+        <textarea id="cellFormula" readonly rows="1" placeholder="点击单元格查看完整内容…"></textarea>
+      </div>
+      <button type="button" id="btnCopyFormula" class="formula-copy" title="复制编辑栏内容" disabled>复制</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <colgroup id="colgroup"></colgroup>
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="colFilterPop" class="col-filter-pop" hidden>
+    <div class="col-filter-head">
+      <strong id="colFilterTitle">列筛选</strong>
+      <span id="btnClearColFilter" class="filter-clear-link">清除本列</span>
+    </div>
+    <div class="col-filter-tools">
+      <input type="search" id="colFilterSearch" placeholder="搜索本列取值…" autocomplete="off" />
+      <button type="button" id="btnFilterAll">全选</button>
+    </div>
+    <div id="colFilterList" class="col-filter-list"></div>
+    <div class="col-filter-foot">
+      <button type="button" id="btnFilterCancel">取消</button>
+      <button type="button" class="primary" id="btnFilterOk">确定</button>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    var SESSION_KEY = "t11_portal_session_v2";
+    var SESSION_LEGACY = "t11_portal_session_v1";
+    var COL_ETA = "反馈（到仓时间）";
+    var COL_OPS = "运营反馈";
+    var CONFIRM_COL = "运营确认SKU";
+    var FALLBACK_COLS = [
+      "下单时间", "下单时间（改）", "入库时间", "订单编号", "产品ID", "SKU（改）", "数量（改）",
+      "品名", "订单规格", "缺货规格",
+      "店铺", "店长", "采购员", "替换SKU",
+      "缺货原因", "运单号", "采购单号（准）", "采购状态", "采购添加时间",
+      "物流单号", "最新物流信息", "扫描情况", "收货时间", "上架时间",
+      COL_ETA, COL_OPS, CONFIRM_COL
+    ];
+    var COLS = [];
+    var EDIT_COLS = {
+      "反馈（到仓时间）": "eta",
+      "运营反馈": "ops",
+      "运营确认SKU": "confirm_sku"
+    };
+    var WIDTH_STORE_KEY = "t11_portal_col_widths_v1";
+    var FILTER_STORE_KEY = "t11_portal_col_filters_v1";
+    var SORT_STORE_KEY = "t11_portal_col_sort_v1";
+    var DEFAULT_SORT_COL = "下单时间";
+    var DEFAULT_SORT_FALLBACK = "下单时间（改）";
+    var DATE_COLS = {
+      "下单时间": 1, "下单时间（改）": 1, "入库时间": 1, "采购添加时间": 1,
+      "收货时间": 1, "上架时间": 1
+    };
+    var NUM_COLS = { "数量（改）": 1, "产品ID": 1 };
+    var DEFAULT_WIDTH_BY_COL = {
+      "下单时间（改）": 88, "入库时间": 88, "产品ID": 72, "SKU（改）": 140, "数量（改）": 52,
+      "订单编号": 120, "品名": 160, "订单规格": 120, "缺货规格": 120,
+      "反馈（到仓时间）": 120, "运营反馈": 140, "运营确认SKU": 140, "采购单号（准）": 110, "采购添加时间": 140,
+      "最新物流信息": 180, "物流单号": 120
+    };
+    var colWidths = Object.create(null);
+    var resizeState = null;
+    var selectedCell = null;
+
+    var cellAddr = document.getElementById("cellAddr");
+    var cellFormula = document.getElementById("cellFormula");
+    var btnCopyFormula = document.getElementById("btnCopyFormula");
+
+    var cfg = window.T11PortalConfig || {};
+    var supabaseUrl = String(cfg.supabaseUrl || "").replace(/\/+$/, "");
+    var anonKey = String(cfg.supabaseAnonKey || "");
+    var editPassword = String(cfg.editPassword || cfg.sitePassword || "22");
+    var adminPassword = String(cfg.adminPassword || "2222");
+    var legacyPasswords = [];
+    if (cfg.sitePassword && String(cfg.sitePassword) !== editPassword) {
+      legacyPasswords.push(String(cfg.sitePassword));
+    }
+    (cfg.legacyPasswords || []).forEach(function (p) {
+      p = String(p == null ? "" : p).trim();
+      if (p && legacyPasswords.indexOf(p) < 0) legacyPasswords.push(p);
+    });
+    var sessionRole = "";
+
+    var gate = document.getElementById("gate");
+    var app = document.getElementById("app");
+    var gatePwd = document.getElementById("gatePwd");
+    var gateStatus = document.getElementById("gateStatus");
+    var bindPrefix = document.getElementById("bindPrefix");
+    var searchBox = document.getElementById("searchBox");
+    var appStatus = document.getElementById("appStatus");
+    var roleTag = document.getElementById("roleTag");
+    var btnClearCloud = document.getElementById("btnClearCloud");
+    var thead = document.getElementById("thead");
+    var colgroup = document.getElementById("colgroup");
+    var tbody = document.getElementById("tbody");
+    var rowsCache = [];
+    var colFilters = Object.create(null);
+    var sortState = null;
+    var filterPopCol = null;
+    var filterDraft = null;
+    var filterPopAnchor = null;
+    var confirmSkuSel = null;
+    var confirmSkuDragAnchor = null;
+    var confirmSkuSelectDragging = false;
+    var confirmSkuJustDragged = false;
+    var displayRowsCache = null;
+    var displayRowsCacheToken = "";
+    var rowKeyIndexMap = Object.create(null);
+    var saveTimers = Object.create(null);
+    var pendingSaves = Object.create(null);
+    var paintConfirmSkuRaf = null;
+    var virtualScrollRaf = null;
+    var formulaBarRaf = null;
+    var searchRenderTimer = null;
+    var VIRTUAL_ROW_H = 30;
+    var VIRTUAL_THRESHOLD = 250;
+    var tableWrap = null;
+
+    var colFilterPop = document.getElementById("colFilterPop");
+    var colFilterTitle = document.getElementById("colFilterTitle");
+    var colFilterList = document.getElementById("colFilterList");
+    var colFilterSearch = document.getElementById("colFilterSearch");
+    var btnFilterAll = document.getElementById("btnFilterAll");
+    var btnFilterOk = document.getElementById("btnFilterOk");
+    var btnFilterCancel = document.getElementById("btnFilterCancel");
+    var btnClearColFilter = document.getElementById("btnClearColFilter");
+    var btnClearFilters = document.getElementById("btnClearFilters");
+
+    function setStatus(el, text, kind) {
+      el.textContent = text || "";
+      el.className = "status" + (kind ? " " + kind : "");
+    }
+
+    function ensureCfg() {
+      if (!supabaseUrl || !anonKey) throw new Error("缺少 Supabase 配置，请先运行 scripts/setup_supabase_t11.mjs");
+      if (!editPassword && !adminPassword) throw new Error("缺少站点密码配置");
+    }
+
+    function normalizePasswordInput(pwd) {
+      pwd = String(pwd == null ? "" : pwd).trim();
+      return pwd.replace(/[\uFF10-\uFF19]/g, function (ch) {
+        return String.fromCharCode(ch.charCodeAt(0) - 0xFF10 + 48);
+      });
+    }
+
+    function resolveRoleFromPassword(pwd) {
+      pwd = normalizePasswordInput(pwd);
+      if (!pwd) return "";
+      if (adminPassword && pwd === normalizePasswordInput(adminPassword)) return "admin";
+      if (editPassword && pwd === normalizePasswordInput(editPassword)) return "edit";
+      for (var i = 0; i < legacyPasswords.length; i++) {
+        if (pwd === normalizePasswordInput(legacyPasswords[i])) return "edit";
+      }
+      return "";
+    }
+
+    function saveSession(role) {
+      sessionRole = role || "";
+      try {
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({ role: sessionRole }));
+      } catch (_) {}
+      syncRoleUi();
+    }
+
+    function syncRoleUi() {
+      var isAdmin = sessionRole === "admin";
+      if (roleTag) {
+        roleTag.classList.remove("hidden");
+        roleTag.textContent = isAdmin ? "管理员" : "运营";
+        roleTag.classList.toggle("admin", isAdmin);
+      }
+      if (btnClearCloud) btnClearCloud.classList.toggle("hidden", !isAdmin);
+    }
+
+    function readSessionRole() {
+      try {
+        var raw = sessionStorage.getItem(SESSION_KEY);
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed && (parsed.role === "admin" || parsed.role === "edit")) return parsed.role;
+        }
+        if (sessionStorage.getItem(SESSION_LEGACY) === "1") return "edit";
+      } catch (_) {}
+      return "";
+    }
+
+    function hdr(extra) {
+      var h = {
+        apikey: anonKey,
+        Authorization: "Bearer " + anonKey,
+        "Content-Type": "application/json"
+      };
+      if (extra) Object.keys(extra).forEach(function (k) { h[k] = extra[k]; });
+      return h;
+    }
+
+    async function sbFetch(path, opts) {
+      opts = opts || {};
+      var res = await fetch(supabaseUrl + path, {
+        method: opts.method || "GET",
+        headers: hdr(opts.prefer ? { Prefer: opts.prefer } : null),
+        body: opts.body != null ? JSON.stringify(opts.body) : undefined
+      });
+      var text = await res.text();
+      if (!res.ok) {
+        var msg = text;
+        try { msg = JSON.parse(text).message || text; } catch (_) {}
+        throw new Error(msg);
+      }
+      if (!text) return null;
+      try { return JSON.parse(text); } catch (_) { return text; }
+    }
+
+    function showApp(on) {
+      gate.classList.toggle("hidden", on);
+      app.classList.toggle("hidden", !on);
+    }
+
+    function enterApp() {
+      ensureCfg();
+      var role = resolveRoleFromPassword(gatePwd.value);
+      if (!role) {
+        setStatus(gateStatus, "密码错误", "err");
+        return;
+      }
+      saveSession(role);
+      showApp(true);
+      initApp().catch(function (e) {
+        setStatus(appStatus, e.message || String(e), "err");
+      });
+    }
+
+    function logout() {
+      sessionRole = "";
+      try {
+        sessionStorage.removeItem(SESSION_KEY);
+        sessionStorage.removeItem(SESSION_LEGACY);
+      } catch (_) {}
+      showApp(false);
+      gatePwd.value = "";
+      if (roleTag) roleTag.classList.add("hidden");
+      if (btnClearCloud) btnClearCloud.classList.add("hidden");
+    }
+
+    function snapVal(rec, col) {
+      if (col === COL_ETA) return rec.eta || "";
+      if (col === COL_OPS) return rec.ops || "";
+      if (col === CONFIRM_COL) return rec.confirm_sku || "";
+      var snap = rec.snapshot || {};
+      return snap[col] != null ? snap[col] : "";
+    }
+
+    function invalidateDisplayRowsCache() {
+      displayRowsCache = null;
+      displayRowsCacheToken = "";
+      rowKeyIndexMap = Object.create(null);
+    }
+
+    function displayRowsCacheTokenNow() {
+      return String(searchBox.value || "") + "\u0001" + JSON.stringify(colFilters) +
+        "\u0001" + JSON.stringify(sortState);
+    }
+
+    function rebuildRowKeyIndexMap(list) {
+      rowKeyIndexMap = Object.create(null);
+      (list || []).forEach(function (rec, i) {
+        if (rec && rec.row_key) rowKeyIndexMap[rec.row_key] = i;
+      });
+    }
+
+    function displayRowList(force) {
+      var token = displayRowsCacheTokenNow();
+      if (!force && displayRowsCache && displayRowsCacheToken === token) return displayRowsCache;
+      displayRowsCache = sortedDisplayRowsUncached();
+      displayRowsCacheToken = token;
+      rebuildRowKeyIndexMap(displayRowsCache);
+      return displayRowsCache;
+    }
+
+    function rowKeyIndexInDisplay(rowKey) {
+      if (rowKeyIndexMap[rowKey] != null) return rowKeyIndexMap[rowKey];
+      return rowKeyIndexInDisplaySlow(rowKey);
+    }
+
+    function rowKeyIndexInDisplaySlow(rowKey) {
+      var list = displayRowList();
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].row_key === rowKey) return i;
+      }
+      return -1;
+    }
+
+    function confirmSkuSelKeys() {
+      if (!confirmSkuSel || !confirmSkuSel.segments) return [];
+      var seen = Object.create(null);
+      var all = [];
+      confirmSkuSel.segments.forEach(function (seg) {
+        (seg.keys || []).forEach(function (k) {
+          if (seen[k]) return;
+          seen[k] = true;
+          all.push(k);
+        });
+      });
+      return all;
+    }
+
+    function confirmSkuMultiActive() {
+      return confirmSkuSelKeys().length > 1;
+    }
+
+    function buildConfirmSkuKeyRange(aKey, bKey) {
+      var ia = rowKeyIndexInDisplay(aKey);
+      var ib = rowKeyIndexInDisplay(bKey);
+      if (ia < 0 || ib < 0) return [aKey, bKey].filter(Boolean);
+      var lo = Math.min(ia, ib);
+      var hi = Math.max(ia, ib);
+      var out = [];
+      var list = displayRowList();
+      for (var i = lo; i <= hi; i++) out.push(list[i].row_key);
+      return out;
+    }
+
+    function normalizeConfirmSegment(anchorKey, keys) {
+      keys = (keys || []).filter(Boolean);
+      if (!keys.length) return null;
+      var seen = Object.create(null);
+      var ordered = [];
+      keys.forEach(function (k) {
+        if (seen[k]) return;
+        seen[k] = true;
+        ordered.push(k);
+      });
+      ordered.sort(function (a, b) {
+        return rowKeyIndexInDisplay(a) - rowKeyIndexInDisplay(b);
+      });
+      if (!ordered.length) return null;
+      if (ordered.indexOf(anchorKey) < 0) anchorKey = ordered[0];
+      return { anchorKey: anchorKey, keys: ordered };
+    }
+
+    function findConfirmSkuTdByRowKey(rowKey) {
+      if (!tbody || !rowKey) return null;
+      var trs = tbody.querySelectorAll("tr[data-key]");
+      for (var i = 0; i < trs.length; i++) {
+        if (trs[i].dataset.key === rowKey) {
+          return trs[i].querySelector('td[data-col="' + CONFIRM_COL + '"]');
+        }
+      }
+      return null;
+    }
+
+    function findConfirmSkuInputByRowKey(rowKey) {
+      var td = findConfirmSkuTdByRowKey(rowKey);
+      return td ? td.querySelector("input.confirm-sku-input") : null;
+    }
+
+    function cancelConfirmSkuDrag(revertRange) {
+      detachConfirmSkuDragListeners();
+      if (revertRange && confirmSkuSelectDragging && confirmSkuDragAnchor && confirmSkuDragAnchor.rowKey) {
+        setConfirmSkuOneSegment(confirmSkuDragAnchor.rowKey, [confirmSkuDragAnchor.rowKey], {
+          lastOpAnchorKey: confirmSkuDragAnchor.rowKey
+        });
+        paintConfirmSkuCellSelection();
+      }
+      confirmSkuSelectDragging = false;
+      confirmSkuDragAnchor = null;
+      document.body.classList.remove("confirm-sku-selecting");
+    }
+
+    function clearConfirmSkuSel() {
+      confirmSkuSel = null;
+      clearConfirmSkuSelectionPaint();
+    }
+
+    function syncConfirmSkuSingleCell(rowKey) {
+      if (!rowKey) {
+        clearConfirmSkuSel();
+        return;
+      }
+      setConfirmSkuOneSegment(rowKey, [rowKey], { lastOpAnchorKey: rowKey });
+      paintConfirmSkuCellSelection();
+    }
+
+    function clearConfirmSkuSelectionPaint() {
+      if (!tbody) return;
+      tbody.querySelectorAll(
+        "td.confirm-sku-sel-inactive, td.confirm-sku-sel-top, td.confirm-sku-sel-btm, " +
+        "td.confirm-sku-sel-mid, td.confirm-sku-sel-single"
+      ).forEach(function (td) {
+        td.classList.remove(
+          "confirm-sku-sel-inactive", "confirm-sku-sel-top", "confirm-sku-sel-btm",
+          "confirm-sku-sel-mid", "confirm-sku-sel-single"
+        );
+      });
+    }
+
+    function paintConfirmSkuCellSelectionNow() {
+      clearConfirmSkuSelectionPaint();
+      if (!confirmSkuSel || !confirmSkuSel.segments || !tbody) return;
+      confirmSkuSel.segments.forEach(function (seg) {
+        var keys = seg.keys || [];
+        if (!keys.length) return;
+        var minKey = keys[0];
+        var maxKey = keys[keys.length - 1];
+        keys.forEach(function (key) {
+          var td = findConfirmSkuTdByRowKey(key);
+          if (!td) return;
+          var whiteKey = seg.anchorKey;
+          if (keys.length > 1 && key !== whiteKey) td.classList.add("confirm-sku-sel-inactive");
+          if (keys.length === 1) {
+            td.classList.add("confirm-sku-sel-single");
+          } else if (key === minKey && key === maxKey) {
+            td.classList.add("confirm-sku-sel-single");
+          } else if (key === minKey) {
+            td.classList.add("confirm-sku-sel-top");
+          } else if (key === maxKey) {
+            td.classList.add("confirm-sku-sel-btm");
+          } else {
+            td.classList.add("confirm-sku-sel-mid");
+          }
+        });
+      });
+    }
+
+    function paintConfirmSkuCellSelection() {
+      if (paintConfirmSkuRaf) return;
+      paintConfirmSkuRaf = requestAnimationFrame(function () {
+        paintConfirmSkuRaf = null;
+        paintConfirmSkuCellSelectionNow();
+      });
+    }
+
+    function setConfirmSkuOneSegment(anchorKey, keys, opts) {
+      opts = opts || {};
+      var seg = normalizeConfirmSegment(anchorKey, keys);
+      if (!seg) {
+        clearConfirmSkuSel();
+        return;
+      }
+      var opAnchor = opts.lastOpAnchorKey != null ? opts.lastOpAnchorKey : seg.anchorKey;
+      confirmSkuSel = {
+        segments: [seg],
+        shiftAnchorKey: seg.anchorKey,
+        activeKey: opAnchor,
+        lastOpAnchorKey: opAnchor
+      };
+    }
+
+    function setConfirmSkuDragSegment(anchorKey, keys, ctrlAppend) {
+      var seg = normalizeConfirmSegment(anchorKey, keys);
+      if (!seg) return;
+      if (!confirmSkuSel || !confirmSkuSel.segments || !ctrlAppend) {
+        setConfirmSkuOneSegment(anchorKey, keys, { lastOpAnchorKey: anchorKey });
+        return;
+      }
+      confirmSkuSel.segments.push(seg);
+      confirmSkuSel.shiftAnchorKey = anchorKey;
+      confirmSkuSel.lastOpAnchorKey = anchorKey;
+      confirmSkuSel.activeKey = anchorKey;
+    }
+
+    function toggleConfirmSkuCellSel(rowKey) {
+      if (!rowKey) return;
+      if (!confirmSkuSel || !confirmSkuSel.segments) {
+        setConfirmSkuOneSegment(rowKey, [rowKey], { lastOpAnchorKey: rowKey });
+        return;
+      }
+      var foundSeg = -1;
+      var foundIdx = -1;
+      confirmSkuSel.segments.forEach(function (seg, si) {
+        var idx = (seg.keys || []).indexOf(rowKey);
+        if (idx >= 0) {
+          foundSeg = si;
+          foundIdx = idx;
+        }
+      });
+      if (foundSeg >= 0) {
+        var seg = confirmSkuSel.segments[foundSeg];
+        seg.keys.splice(foundIdx, 1);
+        if (!seg.keys.length) confirmSkuSel.segments.splice(foundSeg, 1);
+        if (!confirmSkuSel.segments.length) {
+          clearConfirmSkuSel();
+          return;
+        }
+        confirmSkuSel.lastOpAnchorKey = rowKey;
+        confirmSkuSel.activeKey = rowKey;
+        return;
+      }
+      confirmSkuSel.segments.push(normalizeConfirmSegment(rowKey, [rowKey]));
+      confirmSkuSel.lastOpAnchorKey = rowKey;
+      confirmSkuSel.activeKey = rowKey;
+    }
+
+    function extendConfirmSkuCellSelTo(rowKey) {
+      if (!rowKey) return;
+      var anchor = confirmSkuSel && confirmSkuSel.shiftAnchorKey
+        ? confirmSkuSel.shiftAnchorKey
+        : rowKey;
+      var rangeKeys = buildConfirmSkuKeyRange(anchor, rowKey);
+      setConfirmSkuOneSegment(anchor, rangeKeys, { lastOpAnchorKey: anchor });
+    }
+
+    function splitClipboardLinesForPaste(text) {
+      var raw = String(text == null ? "" : text);
+      if (!raw) return [];
+      if (raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1);
+      var lines = raw.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+      while (lines.length > 1 && !String(lines[lines.length - 1] || "").trim()) lines.pop();
+      return lines.map(function (l) {
+        return String(l.split("\t")[0] != null ? l.split("\t")[0] : "").trim();
+      });
+    }
+
+    function shouldBatchPasteConfirmSku() {
+      if (confirmSkuSelKeys().length > 1) return true;
+      var ae = document.activeElement;
+      if (ae && ae.classList && ae.classList.contains("confirm-sku-input")) {
+        if (confirmSkuSelKeys().length >= 1) return true;
+        return false;
+      }
+      return confirmSkuSelKeys().length >= 1;
+    }
+
+    async function applyConfirmSkuPasteFromText(text) {
+      var keys = confirmSkuSelKeys();
+      if (!keys.length && selectedCell && selectedCell.col === CONFIRM_COL && selectedCell.rowKey) {
+        keys = [selectedCell.rowKey];
+      }
+      if (!keys.length) return false;
+      var lines = splitClipboardLinesForPaste(text);
+      if (!lines.length) {
+        setStatus(appStatus, "剪贴板为空", "warn");
+        return false;
+      }
+      var n = lines.length === 1 ? keys.length : Math.min(lines.length, keys.length);
+      var tasks = [];
+      for (var i = 0; i < n; i++) {
+        var val = lines.length === 1 ? lines[0] : String(lines[i] != null ? lines[i] : "");
+        tasks.push(saveCell(keys[i], "confirm_sku", val, { silent: true }));
+      }
+      await Promise.all(tasks);
+      keys.slice(0, n).forEach(function (key, idx) {
+        var val = lines.length === 1 ? lines[0] : String(lines[idx] != null ? lines[idx] : "");
+        var inp = findConfirmSkuInputByRowKey(key);
+        if (inp) inp.value = val;
+      });
+      setStatus(appStatus, "已粘贴 " + n + " 格运营确认SKU", "ok");
+      paintConfirmSkuCellSelection();
+      return true;
+    }
+
+    async function deleteConfirmSkuSelectionValues() {
+      var keys = confirmSkuSelKeys();
+      if (!keys.length) return false;
+      await Promise.all(keys.map(function (key) {
+        return saveCell(key, "confirm_sku", "", { silent: true });
+      }));
+      keys.forEach(function (key) {
+        var inp = findConfirmSkuInputByRowKey(key);
+        if (inp) inp.value = "";
+      });
+      setStatus(appStatus, "已清空 " + keys.length + " 格运营确认SKU", "ok");
+      paintConfirmSkuCellSelection();
+      return true;
+    }
+
+    function confirmSkuViFromPointer(node) {
+      if (!node || !node.closest) return null;
+      var td = node.closest('td[data-col="' + CONFIRM_COL + '"]');
+      if (!td) return null;
+      var tr = td.closest("tr");
+      if (!tr || !tr.dataset.key) return null;
+      return tr.dataset.key;
+    }
+
+    function detachConfirmSkuDragListeners() {
+      document.removeEventListener("mousemove", onConfirmSkuMouseMove);
+      document.removeEventListener("mouseup", onConfirmSkuMouseUp);
+    }
+
+    function onConfirmSkuMouseMove(ev) {
+      if (confirmSkuDragAnchor && !confirmSkuSelectDragging) {
+        var dx = ev.clientX - confirmSkuDragAnchor.x;
+        var dy = ev.clientY - confirmSkuDragAnchor.y;
+        if (dx * dx + dy * dy >= 9) {
+          confirmSkuSelectDragging = true;
+          document.body.classList.add("confirm-sku-selecting");
+        }
+      }
+      if (!confirmSkuSelectDragging || !confirmSkuDragAnchor) return;
+      var hitKey = confirmSkuViFromPointer(document.elementFromPoint(ev.clientX, ev.clientY));
+      if (hitKey == null) return;
+      var anchorKey = confirmSkuDragAnchor.anchorKey || confirmSkuDragAnchor.rowKey;
+      if (confirmSkuSel && confirmSkuSel.lastOpAnchorKey === hitKey &&
+          confirmSkuSel.segments && confirmSkuSel.segments.length === 1 &&
+          confirmSkuSel.segments[0].keys && confirmSkuSel.segments[0].keys.length &&
+          confirmSkuSel.segments[0].keys[0] === anchorKey &&
+          confirmSkuSel.segments[0].keys[confirmSkuSel.segments[0].keys.length - 1] === hitKey) {
+        return;
+      }
+      var rangeKeys = buildConfirmSkuKeyRange(anchorKey, hitKey);
+      setConfirmSkuDragSegment(anchorKey, rangeKeys, !!confirmSkuDragAnchor.ctrl);
+      paintConfirmSkuCellSelection();
+    }
+
+    function onConfirmSkuMouseUp() {
+      if (confirmSkuSelectDragging) {
+        confirmSkuJustDragged = true;
+        cancelConfirmSkuDrag(false);
+        paintConfirmSkuCellSelection();
+      } else if (confirmSkuDragAnchor && confirmSkuDragAnchor.rowKey) {
+        var key = confirmSkuDragAnchor.rowKey;
+        cancelConfirmSkuDrag(false);
+        var curKeys = confirmSkuSelKeys();
+        if (curKeys.length > 1 && curKeys.indexOf(key) >= 0) {
+          paintConfirmSkuCellSelection();
+        } else {
+          syncConfirmSkuSingleCell(key);
+        }
+      } else {
+        cancelConfirmSkuDrag(false);
+      }
+    }
+
+    function attachConfirmSkuDragListeners() {
+      detachConfirmSkuDragListeners();
+      document.addEventListener("mousemove", onConfirmSkuMouseMove);
+      document.addEventListener("mouseup", onConfirmSkuMouseUp);
+    }
+
+    function excelColLetters(colIndex) {
+      var n = Number(colIndex);
+      if (!isFinite(n) || n < 0) return "";
+      var s = "";
+      n++;
+      while (n > 0) {
+        n--;
+        s = String.fromCharCode(65 + (n % 26)) + s;
+        n = Math.floor(n / 26);
+      }
+      return s;
+    }
+
+    function excelCellAddr(colIndex, rowIndex) {
+      var letters = excelColLetters(colIndex);
+      if (!letters || rowIndex == null || rowIndex < 0) return "—";
+      return letters + String(rowIndex + 1);
+    }
+
+    function resizeFormulaBar() {
+      if (!cellFormula) return;
+      cellFormula.style.height = "auto";
+      cellFormula.style.height = Math.min(120, Math.max(28, cellFormula.scrollHeight)) + "px";
+    }
+
+    function clearCellSelection() {
+      selectedCell = null;
+      tbody.querySelectorAll("td.cell-selected").forEach(function (td) {
+        td.classList.remove("cell-selected");
+      });
+      if (cellAddr) cellAddr.textContent = "—";
+      if (cellFormula) {
+        cellFormula.value = "";
+        resizeFormulaBar();
+      }
+      if (btnCopyFormula) btnCopyFormula.disabled = true;
+    }
+
+    function updateFormulaBar(col, rowIndex, text) {
+      var addr = excelCellAddr(COLS.indexOf(col), rowIndex);
+      if (addr !== "—" && col) addr = addr + " · " + col;
+      if (cellAddr) cellAddr.textContent = addr;
+      if (cellFormula) cellFormula.value = text == null ? "" : String(text);
+      if (btnCopyFormula) btnCopyFormula.disabled = !cellFormula || !cellFormula.value;
+      resizeFormulaBar();
+    }
+
+    function selectCell(td, rowIndex, col, opts) {
+      opts = opts || {};
+      if (!td || col == null) return;
+      tbody.querySelectorAll("td.cell-selected").forEach(function (el) {
+        el.classList.remove("cell-selected");
+      });
+      td.classList.add("cell-selected");
+      var tr = td.parentElement;
+      var rowKey = tr && tr.dataset.key ? tr.dataset.key : "";
+      if (col === CONFIRM_COL) {
+        if (!opts.keepConfirmSkuMulti && !confirmSkuMultiActive()) {
+          if (rowKey) setConfirmSkuOneSegment(rowKey, [rowKey], { lastOpAnchorKey: rowKey });
+          else clearConfirmSkuSel();
+        }
+      } else {
+        clearConfirmSkuSel();
+      }
+      var text = td.textContent || "";
+      var inp = td.querySelector("input");
+      if (inp) text = inp.value;
+      selectedCell = { rowKey: rowKey, rowIndex: rowIndex, col: col, text: text };
+      updateFormulaBar(col, rowIndex, text);
+      if (col === CONFIRM_COL) paintConfirmSkuCellSelection();
+    }
+
+    function widthStoreKey(pre) {
+      return WIDTH_STORE_KEY + ":" + String(pre || "_");
+    }
+
+    function loadWidthMap(pre) {
+      try {
+        var raw = localStorage.getItem(widthStoreKey(pre));
+        if (!raw) return Object.create(null);
+        var parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return Object.create(null);
+        return parsed;
+      } catch (_) {
+        return Object.create(null);
+      }
+    }
+
+    function saveWidthMap(pre) {
+      try {
+        localStorage.setItem(widthStoreKey(pre), JSON.stringify(colWidths));
+      } catch (_) {}
+    }
+
+    function defaultColWidth(col) {
+      return DEFAULT_WIDTH_BY_COL[col] || 96;
+    }
+
+    function getColWidth(col) {
+      var w = Number(colWidths[col]);
+      if (isFinite(w) && w > 0) return w;
+      return defaultColWidth(col);
+    }
+
+    function renderColgroup() {
+      if (!colgroup) return;
+      colgroup.innerHTML = "";
+      COLS.forEach(function (c) {
+        var col = document.createElement("col");
+        col.dataset.col = c;
+        colgroup.appendChild(col);
+      });
+      syncTableLayout();
+    }
+
+    function syncTableLayout() {
+      if (!colgroup) return;
+      var total = 0;
+      COLS.forEach(function (c, i) {
+        var w = getColWidth(c);
+        total += w;
+        var colEl = colgroup.children[i];
+        if (colEl) {
+          colEl.style.width = w + "px";
+          colEl.style.minWidth = w + "px";
+          colEl.style.maxWidth = w + "px";
+        }
+      });
+      var table = colgroup.parentElement;
+      if (table) {
+        table.style.width = Math.max(total, 1) + "px";
+        table.style.minWidth = Math.max(total, 1) + "px";
+      }
+      if (thead) {
+        var ths = thead.querySelectorAll("th");
+        COLS.forEach(function (c, i) {
+          var w = getColWidth(c);
+          if (ths[i]) {
+            ths[i].style.width = w + "px";
+            ths[i].style.minWidth = w + "px";
+            ths[i].style.maxWidth = w + "px";
+          }
+        });
+      }
+    }
+
+    function applyColWidth(col, width) {
+      var w = Math.round(width);
+      if (!isFinite(w) || w < 1) w = 1;
+      colWidths[col] = w;
+      syncTableLayout();
+    }
+
+    function startColResize(col, th, startX) {
+      resizeState = {
+        col: col,
+        startX: startX,
+        startW: getColWidth(col)
+      };
+      document.body.classList.add("col-resizing");
+    }
+
+    function onColResizeMove(ev) {
+      if (!resizeState) return;
+      applyColWidth(resizeState.col, resizeState.startW + ev.clientX - resizeState.startX);
+    }
+
+    function endColResize() {
+      if (!resizeState) return;
+      syncTableLayout();
+      saveWidthMap(bindPrefix.value);
+      resizeState = null;
+      document.body.classList.remove("col-resizing");
+      document.removeEventListener("mousemove", onColResizeMove);
+      document.removeEventListener("mouseup", endColResize);
+    }
+
+    function bindColResize(th, col) {
+      var handle = document.createElement("span");
+      handle.className = "col-resize";
+      handle.title = "拖拽调整列宽";
+      handle.addEventListener("mousedown", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        startColResize(col, th, ev.clientX);
+        document.addEventListener("mousemove", onColResizeMove);
+        document.addEventListener("mouseup", endColResize);
+      });
+      handle.addEventListener("dblclick", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        applyColWidth(col, defaultColWidth(col));
+        saveWidthMap(bindPrefix.value);
+      });
+      th.appendChild(handle);
+    }
+
+    function renderHead() {
+      renderColgroup();
+      thead.innerHTML = "";
+      var tr = document.createElement("tr");
+      var activeSortCol = sortState && sortState.col ? sortState.col : effectiveSortCol();
+      var activeSortDir = sortState && sortState.col ? sortState.dir : effectiveSortDir();
+      COLS.forEach(function (c) {
+        var th = document.createElement("th");
+        th.dataset.col = c;
+        var inner = document.createElement("div");
+        inner.className = "th-inner";
+        var label = document.createElement("span");
+        label.className = "th-label" + (c === activeSortCol ? " sorted" : "");
+        label.textContent = c;
+        label.title = "点击排序（升序→降序→默认）";
+        label.addEventListener("click", function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          cycleSortCol(c);
+        });
+        var sortInd = document.createElement("span");
+        sortInd.className = "sort-ind";
+        if (c === activeSortCol) {
+          sortInd.textContent = activeSortDir === "asc" ? "↑" : "↓";
+        }
+        var fbtn = document.createElement("button");
+        fbtn.type = "button";
+        fbtn.className = "col-filter-btn" + (colFilters[c] ? " active" : "");
+        fbtn.dataset.col = c;
+        fbtn.textContent = "▾";
+        fbtn.title = "列筛选";
+        fbtn.addEventListener("click", function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          openColFilterPop(c, fbtn);
+        });
+        inner.appendChild(label);
+        inner.appendChild(sortInd);
+        inner.appendChild(fbtn);
+        th.appendChild(inner);
+        bindColResize(th, c);
+        tr.appendChild(th);
+      });
+      thead.appendChild(tr);
+    }
+
+    function loadSortState(pre) {
+      try {
+        var raw = sessionStorage.getItem(SORT_STORE_KEY + ":" + String(pre || "_"));
+        if (!raw) return null;
+        var parsed = JSON.parse(raw);
+        if (!parsed || !parsed.col || (parsed.dir !== "asc" && parsed.dir !== "desc")) return null;
+        return { col: parsed.col, dir: parsed.dir };
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function saveSortState(pre) {
+      try {
+        var key = SORT_STORE_KEY + ":" + String(pre || "_");
+        if (!sortState || !sortState.col) sessionStorage.removeItem(key);
+        else sessionStorage.setItem(key, JSON.stringify(sortState));
+      } catch (_) {}
+    }
+
+    function effectiveSortCol() {
+      if (sortState && sortState.col && COLS.indexOf(sortState.col) >= 0) return sortState.col;
+      if (COLS.indexOf(DEFAULT_SORT_COL) >= 0) return DEFAULT_SORT_COL;
+      if (COLS.indexOf(DEFAULT_SORT_FALLBACK) >= 0) return DEFAULT_SORT_FALLBACK;
+      return COLS[0] || "";
+    }
+
+    function effectiveSortDir() {
+      if (sortState && sortState.col) return sortState.dir === "asc" ? "asc" : "desc";
+      return "desc";
+    }
+
+    function cycleSortCol(col) {
+      if (!col) return;
+      if (!sortState || sortState.col !== col) {
+        sortState = { col: col, dir: "asc" };
+      } else if (sortState.dir === "asc") {
+        sortState.dir = "desc";
+      } else {
+        sortState = null;
+      }
+      saveSortState(bindPrefix.value);
+      renderHead();
+      renderBody();
+    }
+
+    function resetSortState() {
+      sortState = null;
+      saveSortState(bindPrefix.value);
+      renderHead();
+    }
+
+    function parseDateMs(text) {
+      var s = String(text == null ? "" : text).trim();
+      if (!s) return NaN;
+      var m = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+      if (m) {
+        return new Date(
+          Number(m[1]), Number(m[2]) - 1, Number(m[3]),
+          Number(m[4] || 0), Number(m[5] || 0), Number(m[6] || 0)
+        ).getTime();
+      }
+      var t = Date.parse(s);
+      return isFinite(t) ? t : NaN;
+    }
+
+    function sortKeyFor(rec, col) {
+      var raw = filterCellRaw(rec, col);
+      if (!raw) return { kind: "empty", v: "" };
+      if (DATE_COLS[col]) {
+        var ms = parseDateMs(raw);
+        if (isFinite(ms)) return { kind: "date", v: ms };
+      }
+      if (NUM_COLS[col]) {
+        var digits = raw.replace(/\D/g, "");
+        if (digits) return { kind: "num", v: Number(digits) };
+        var n = Number(raw);
+        if (isFinite(n)) return { kind: "num", v: n };
+      }
+      return { kind: "text", v: raw.toLowerCase() };
+    }
+
+    function compareSortKeys(ka, kb, dir) {
+      if (ka.kind === "empty" && kb.kind !== "empty") return 1;
+      if (kb.kind === "empty" && ka.kind !== "empty") return -1;
+      if (ka.kind === "empty" && kb.kind === "empty") return 0;
+      var av = ka.v;
+      var bv = kb.v;
+      var cmp = 0;
+      if (ka.kind === "num" || ka.kind === "date") {
+        cmp = av === bv ? 0 : (av < bv ? -1 : 1);
+      } else {
+        cmp = String(av).localeCompare(String(bv), "zh-CN");
+      }
+      return dir === "desc" ? -cmp : cmp;
+    }
+
+    function sortedDisplayRowsUncached() {
+      var rows = filteredRows().slice();
+      var col = effectiveSortCol();
+      if (!col) return rows;
+      var dir = effectiveSortDir();
+      rows.sort(function (a, b) {
+        var cmp = compareSortKeys(sortKeyFor(a, col), sortKeyFor(b, col), dir);
+        if (cmp !== 0) return cmp;
+        var ak = String(a.row_key || "");
+        var bk = String(b.row_key || "");
+        return ak < bk ? -1 : ak > bk ? 1 : 0;
+      });
+      return rows;
+    }
+
+    function sortedDisplayRows() {
+      return displayRowList();
+    }
+
+    function scheduleSaveCell(rowKey, field, value) {
+      var timerKey = rowKey + "\u0001" + field;
+      pendingSaves[timerKey] = { rowKey: rowKey, field: field, value: value };
+      if (saveTimers[timerKey]) clearTimeout(saveTimers[timerKey]);
+      saveTimers[timerKey] = setTimeout(function () {
+        saveTimers[timerKey] = null;
+        flushScheduledSave(timerKey);
+      }, 700);
+    }
+
+    function flushScheduledSave(timerKey) {
+      var job = pendingSaves[timerKey];
+      if (!job) return;
+      delete pendingSaves[timerKey];
+      saveCell(job.rowKey, job.field, job.value, { silent: true });
+    }
+
+    function flushSaveForRowField(rowKey, field) {
+      var timerKey = rowKey + "\u0001" + field;
+      if (saveTimers[timerKey]) {
+        clearTimeout(saveTimers[timerKey]);
+        saveTimers[timerKey] = null;
+      }
+      if (pendingSaves[timerKey]) flushScheduledSave(timerKey);
+    }
+
+    function scheduleFormulaBarUpdate(col, rowIndex, text) {
+      if (formulaBarRaf) cancelAnimationFrame(formulaBarRaf);
+      formulaBarRaf = requestAnimationFrame(function () {
+        formulaBarRaf = null;
+        updateFormulaBar(col, rowIndex, text);
+      });
+    }
+
+    function filterCellRaw(rec, col) {
+      var v = snapVal(rec, col);
+      return v == null ? "" : String(v).trim();
+    }
+
+    function rowSearchHay(rec) {
+      var snap = rec.snapshot || {};
+      var parts = [
+        rec.order_no, rec.sku, rec.eta, rec.ops,
+        rec.row_key, rec.bind_prefix
+      ];
+      Object.keys(snap).forEach(function (k) {
+        var v = snap[k];
+        if (v != null && v !== "") parts.push(v);
+      });
+      COLS.forEach(function (c) {
+        parts.push(filterCellRaw(rec, c));
+      });
+      return parts.join(" ").toLowerCase();
+    }
+
+    function loadColFilters(pre) {
+      try {
+        var raw = sessionStorage.getItem(FILTER_STORE_KEY + ":" + String(pre || "_"));
+        if (!raw) return Object.create(null);
+        var parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return Object.create(null);
+        return parsed;
+      } catch (_) {
+        return Object.create(null);
+      }
+    }
+
+    function saveColFilters(pre) {
+      try {
+        sessionStorage.setItem(FILTER_STORE_KEY + ":" + String(pre || "_"), JSON.stringify(colFilters));
+      } catch (_) {}
+    }
+
+    function colFilterActiveCount() {
+      var n = 0;
+      Object.keys(colFilters || {}).forEach(function (c) {
+        if (colFilters[c]) n++;
+      });
+      return n;
+    }
+
+    function rowPassesColFilters(rec, exceptCol) {
+      var cols = Object.keys(colFilters || {});
+      for (var i = 0; i < cols.length; i++) {
+        var col = cols[i];
+        if (exceptCol && col === exceptCol) continue;
+        if (!COLS.length || COLS.indexOf(col) < 0) continue;
+        var selected = colFilters[col];
+        if (!selected) continue;
+        var val = filterCellRaw(rec, col);
+        if (!Object.prototype.hasOwnProperty.call(selected, val)) return false;
+        if (!selected[val]) return false;
+      }
+      return true;
+    }
+
+    function rowPassesSearch(rec) {
+      var q = String(searchBox.value || "").trim().toLowerCase();
+      if (!q) return true;
+      return rowSearchHay(rec).indexOf(q) >= 0;
+    }
+
+    function rowPassesFilterContext(rec, exceptCol) {
+      if (!rowPassesSearch(rec)) return false;
+      return rowPassesColFilters(rec, exceptCol);
+    }
+
+    function collectColFilterValues(col) {
+      var map = Object.create(null);
+      rowsCache.forEach(function (rec) {
+        if (!rowPassesFilterContext(rec, col)) return;
+        var v = filterCellRaw(rec, col);
+        map[v] = (map[v] || 0) + 1;
+      });
+      return Object.keys(map).sort(function (a, b) {
+        if (a === "" && b !== "") return 1;
+        if (b === "" && a !== "") return -1;
+        return a < b ? -1 : a > b ? 1 : 0;
+      }).map(function (v) {
+        return { value: v, count: map[v] };
+      });
+    }
+
+    function closeColFilterPop() {
+      filterPopCol = null;
+      filterDraft = null;
+      filterPopAnchor = null;
+      if (colFilterPop) colFilterPop.hidden = true;
+      if (colFilterSearch) colFilterSearch.value = "";
+    }
+
+    function syncFilterAllBtnLabel() {
+      if (!btnFilterAll || !colFilterList) return;
+      var visibles = [];
+      colFilterList.querySelectorAll(".col-filter-item").forEach(function (lab) {
+        if (lab.hidden) return;
+        var cb = lab.querySelector("input[type=checkbox]");
+        if (cb) visibles.push(cb);
+      });
+      var allChecked = visibles.length > 0 && visibles.every(function (cb) { return cb.checked; });
+      btnFilterAll.textContent = allChecked ? "全不选" : "全选";
+    }
+
+    function filterColFilterListBySearch() {
+      if (!colFilterList) return;
+      var q = colFilterSearch ? String(colFilterSearch.value || "").trim().toLowerCase() : "";
+      colFilterList.querySelectorAll(".col-filter-item").forEach(function (lab) {
+        var hay = String(lab.getAttribute("data-search") || "").toLowerCase();
+        lab.hidden = !!(q && hay.indexOf(q) < 0);
+      });
+      syncFilterAllBtnLabel();
+    }
+
+    function positionColFilterPop(anchor) {
+      if (!colFilterPop || !anchor) return;
+      var pad = 8;
+      var rect = anchor.getBoundingClientRect();
+      colFilterPop.style.left = "0px";
+      colFilterPop.style.top = "0px";
+      colFilterPop.hidden = false;
+      var popW = colFilterPop.offsetWidth || 360;
+      var popH = colFilterPop.offsetHeight || 400;
+      var vw = window.innerWidth || popW;
+      var vh = window.innerHeight || popH;
+      var left = Math.min(Math.max(pad, rect.left), vw - popW - pad);
+      var top = rect.bottom + 4;
+      if (top + popH > vh - pad) top = Math.max(pad, rect.top - popH - 4);
+      colFilterPop.style.left = left + "px";
+      colFilterPop.style.top = top + "px";
+    }
+
+    function renderColFilterList(col) {
+      if (!colFilterList) return;
+      colFilterList.innerHTML = "";
+      var values = collectColFilterValues(col);
+      var selected = filterDraft || Object.create(null);
+      values.forEach(function (item) {
+        var v = item.value;
+        var lab = document.createElement("label");
+        lab.className = "col-filter-item";
+        lab.setAttribute("data-search", v || "（空白）");
+        var cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = !Object.keys(selected).length || !!selected[v];
+        cb.addEventListener("change", syncFilterAllBtnLabel);
+        var span = document.createElement("span");
+        span.textContent = v || "（空白）";
+        var cnt = document.createElement("span");
+        cnt.className = "cnt";
+        cnt.textContent = String(item.count);
+        lab.appendChild(cb);
+        lab.appendChild(span);
+        lab.appendChild(cnt);
+        lab.addEventListener("click", function (ev) {
+          if (ev.target === cb) return;
+          ev.preventDefault();
+          cb.checked = !cb.checked;
+          syncFilterAllBtnLabel();
+        });
+        colFilterList.appendChild(lab);
+      });
+      syncFilterAllBtnLabel();
+    }
+
+    function openColFilterPop(col, anchor) {
+      filterPopCol = col;
+      filterPopAnchor = anchor;
+      filterDraft = Object.create(null);
+      var existing = colFilters[col];
+      if (existing) {
+        Object.keys(existing).forEach(function (k) {
+          filterDraft[k] = !!existing[k];
+        });
+      }
+      if (colFilterTitle) colFilterTitle.textContent = "筛选 · " + col;
+      if (colFilterSearch) colFilterSearch.value = "";
+      renderColFilterList(col);
+      positionColFilterPop(anchor);
+    }
+
+    function applyColFilterDraft() {
+      if (!filterPopCol || !colFilterList) return;
+      var selected = Object.create(null);
+      var anyUnchecked = false;
+      var anyChecked = false;
+      colFilterList.querySelectorAll(".col-filter-item").forEach(function (lab) {
+        if (lab.hidden) return;
+        var cb = lab.querySelector("input[type=checkbox]");
+        if (!cb) return;
+        var v = lab.getAttribute("data-search");
+        if (v === "（空白）") v = "";
+        selected[v] = cb.checked;
+        if (cb.checked) anyChecked = true;
+        else anyUnchecked = true;
+      });
+      if (!anyChecked) {
+        setStatus(appStatus, "至少保留一个勾选项", "err");
+        return;
+      }
+      if (anyUnchecked) colFilters[filterPopCol] = selected;
+      else delete colFilters[filterPopCol];
+      saveColFilters(bindPrefix.value);
+      closeColFilterPop();
+      syncFilterHeadBadges();
+      renderBody();
+      updateFilterStatusLine();
+    }
+
+    function clearColFilter(col) {
+      if (col) delete colFilters[col];
+      else {
+        colFilters = Object.create(null);
+        searchBox.value = "";
+        resetSortState();
+      }
+      saveColFilters(bindPrefix.value);
+      closeColFilterPop();
+      syncFilterHeadBadges();
+      if (!col) renderHead();
+      renderBody();
+      updateFilterStatusLine();
+    }
+
+    function syncFilterHeadBadges() {
+      if (!thead) return;
+      thead.querySelectorAll(".col-filter-btn").forEach(function (btn) {
+        var col = btn.getAttribute("data-col");
+        btn.classList.toggle("active", !!(col && colFilters[col]));
+      });
+    }
+
+    function updateFilterStatusLine() {
+      var base = rowsCache.length;
+      var shown = sortedDisplayRows().length;
+      var fc = colFilterActiveCount();
+      var q = String(searchBox.value || "").trim();
+      var parts = ["共 " + base + " 行"];
+      if (shown !== base || fc || q) parts.push("显示 " + shown + " 行");
+      if (fc) parts.push("列筛选×" + fc);
+      if (q) parts.push("搜索");
+      var sc = effectiveSortCol();
+      if (sc) parts.push("排序 " + sc + (effectiveSortDir() === "asc" ? "↑" : "↓"));
+      if (bindPrefix.value) parts.push("（" + bindPrefix.value + "）");
+      setStatus(appStatus, parts.join(" · "), "ok");
+    }
+
+    function filteredRows() {
+      return rowsCache.filter(function (rec) {
+        return rowPassesFilterContext(rec, null);
+      });
+    }
+
+    function renderBody(opts) {
+      opts = opts || {};
+      if (!tableWrap) tableWrap = document.querySelector(".table-wrap");
+      var restoreFocus = null;
+      var ae = document.activeElement;
+      if (ae && ae.classList && ae.classList.contains("confirm-sku-input") && ae.dataset.field) {
+        restoreFocus = {
+          rowKey: ae.closest("tr") && ae.closest("tr").dataset.key,
+          field: ae.dataset.field,
+          start: ae.selectionStart,
+          end: ae.selectionEnd,
+          value: ae.value
+        };
+      } else if (ae && ae.classList && ae.classList.contains("confirm-sku-input") === false &&
+          ae.dataset && ae.dataset.field) {
+        restoreFocus = {
+          rowKey: ae.closest("tr") && ae.closest("tr").dataset.key,
+          field: ae.dataset.field,
+          start: ae.selectionStart,
+          end: ae.selectionEnd,
+          value: ae.value
+        };
+      }
+      var list = displayRowList();
+      var useVirtual = list.length > VIRTUAL_THRESHOLD && tableWrap;
+      var start = 0;
+      var end = list.length;
+      var topPad = 0;
+      var botPad = 0;
+      if (useVirtual) {
+        var st = tableWrap.scrollTop || 0;
+        var vh = tableWrap.clientHeight || 600;
+        start = Math.max(0, Math.floor(st / VIRTUAL_ROW_H) - 20);
+        end = Math.min(list.length, Math.ceil((st + vh) / VIRTUAL_ROW_H) + 20);
+        topPad = start * VIRTUAL_ROW_H;
+        botPad = Math.max(0, (list.length - end) * VIRTUAL_ROW_H);
+      }
+      tbody.innerHTML = "";
+      var colSpan = Math.max(COLS.length, 1);
+      if (topPad > 0) {
+        var trSpTop = document.createElement("tr");
+        trSpTop.className = "virtual-spacer";
+        var tdSpTop = document.createElement("td");
+        tdSpTop.colSpan = colSpan;
+        tdSpTop.style.height = topPad + "px";
+        trSpTop.appendChild(tdSpTop);
+        tbody.appendChild(trSpTop);
+      }
+      var prev = selectedCell;
+      for (var ri = start; ri < end; ri++) {
+        (function (rec, rowIndex) {
+          var tr = document.createElement("tr");
+          tr.dataset.key = rec.row_key;
+          COLS.forEach(function (col) {
+            (function (col) {
+              var td = document.createElement("td");
+              td.dataset.col = col;
+              td.dataset.row = String(rowIndex);
+              td.dataset.rowKey = rec.row_key;
+              td.title = "单击在编辑栏查看完整内容";
+              var val = snapVal(rec, col);
+              if (col === CONFIRM_COL) {
+                td.className = "editable confirm-sku-cell";
+                var cInp = document.createElement("input");
+                cInp.type = "text";
+                cInp.className = "confirm-sku-input";
+                cInp.value = val;
+                cInp.dataset.field = "confirm_sku";
+                cInp.addEventListener("mousedown", function (ev) {
+                  if (ev.shiftKey || ev.ctrlKey || ev.metaKey) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    if (ev.shiftKey && confirmSkuSel) extendConfirmSkuCellSelTo(rec.row_key);
+                    else if (ev.ctrlKey || ev.metaKey) toggleConfirmSkuCellSel(rec.row_key);
+                    else setConfirmSkuOneSegment(rec.row_key, [rec.row_key], { lastOpAnchorKey: rec.row_key });
+                    paintConfirmSkuCellSelection();
+                    return;
+                  }
+                  confirmSkuDragAnchor = {
+                    rowKey: rec.row_key,
+                    x: ev.clientX,
+                    y: ev.clientY,
+                    ctrl: !!(ev.ctrlKey || ev.metaKey),
+                    anchorKey: rec.row_key
+                  };
+                  attachConfirmSkuDragListeners();
+                  ev.stopPropagation();
+                });
+                cInp.addEventListener("paste", function (ev) {
+                  if (!shouldBatchPasteConfirmSku()) return;
+                  var text = ev.clipboardData && ev.clipboardData.getData("text/plain");
+                  if (text == null) return;
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                  applyConfirmSkuPasteFromText(text);
+                });
+                cInp.addEventListener("focus", function () {
+                  cInp.setAttribute("data-orig", cInp.value);
+                  if (confirmSkuMultiActive()) return;
+                  selectCell(td, rowIndex, col);
+                });
+                cInp.addEventListener("click", function (ev) {
+                  ev.stopPropagation();
+                  if (confirmSkuJustDragged) {
+                    confirmSkuJustDragged = false;
+                    return;
+                  }
+                  if (!confirmSkuMultiActive()) selectCell(td, rowIndex, col);
+                });
+                cInp.addEventListener("input", function () {
+                  scheduleSaveCell(rec.row_key, "confirm_sku", cInp.value);
+                  if (selectedCell && selectedCell.rowKey === rec.row_key && selectedCell.col === col) {
+                    selectedCell.text = cInp.value;
+                    scheduleFormulaBarUpdate(col, rowIndex, cInp.value);
+                  }
+                });
+                cInp.addEventListener("blur", function () {
+                  flushSaveForRowField(rec.row_key, "confirm_sku");
+                });
+                td.appendChild(cInp);
+              } else if (EDIT_COLS[col]) {
+                td.className = "editable";
+                var inp = document.createElement("input");
+                inp.type = "text";
+                inp.value = val;
+                inp.dataset.field = EDIT_COLS[col];
+                inp.addEventListener("mousedown", function (ev) { ev.stopPropagation(); });
+                inp.addEventListener("click", function (ev) {
+                  ev.stopPropagation();
+                  selectCell(td, rowIndex, col);
+                });
+                inp.addEventListener("input", function () {
+                  scheduleSaveCell(rec.row_key, inp.dataset.field, inp.value);
+                  if (selectedCell && selectedCell.rowKey === rec.row_key && selectedCell.col === col) {
+                    selectedCell.text = inp.value;
+                    scheduleFormulaBarUpdate(col, rowIndex, inp.value);
+                  }
+                });
+                inp.addEventListener("blur", function () {
+                  flushSaveForRowField(rec.row_key, inp.dataset.field);
+                });
+                td.appendChild(inp);
+              } else {
+                td.textContent = val;
+              }
+              if (col !== CONFIRM_COL) {
+                td.addEventListener("click", function () { selectCell(td, rowIndex, col); });
+              }
+              if (prev && prev.rowKey === rec.row_key && prev.col === col) {
+                td.classList.add("cell-selected");
+                selectedCell = { rowKey: rec.row_key, rowIndex: rowIndex, col: col, text: val };
+              }
+              tr.appendChild(td);
+            })(col);
+          });
+          tbody.appendChild(tr);
+        })(list[ri], ri);
+      }
+      if (botPad > 0) {
+        var trSpBot = document.createElement("tr");
+        trSpBot.className = "virtual-spacer";
+        var tdSpBot = document.createElement("td");
+        tdSpBot.colSpan = colSpan;
+        tdSpBot.style.height = botPad + "px";
+        trSpBot.appendChild(tdSpBot);
+        tbody.appendChild(trSpBot);
+      }
+      paintConfirmSkuCellSelection();
+      if (!opts.virtualOnly) {
+        if (selectedCell) {
+          updateFormulaBar(selectedCell.col, selectedCell.rowIndex, selectedCell.text);
+        } else {
+          clearCellSelection();
+        }
+        updateFilterStatusLine();
+      }
+      if (restoreFocus && restoreFocus.rowKey) {
+        var inpR = null;
+        var trsR = tbody.querySelectorAll("tr[data-key]");
+        for (var ri2 = 0; ri2 < trsR.length; ri2++) {
+          if (trsR[ri2].dataset.key === restoreFocus.rowKey) {
+            inpR = trsR[ri2].querySelector('input[data-field="' + restoreFocus.field + '"]');
+            break;
+          }
+        }
+        if (inpR) {
+          inpR.focus();
+          try {
+            var pos = restoreFocus.end != null ? restoreFocus.end : String(restoreFocus.value || "").length;
+            inpR.setSelectionRange(pos, pos);
+          } catch (_) {}
+        }
+      }
+    }
+
+    async function saveCell(rowKey, field, value, opts) {
+      opts = opts || {};
+      value = value == null ? "" : String(value);
+      var cur = null;
+      for (var i = 0; i < rowsCache.length; i++) {
+        if (rowsCache[i].row_key === rowKey) {
+          cur = rowsCache[i];
+          break;
+        }
+      }
+      if (cur && String(cur[field] != null ? cur[field] : "") === value && !opts.force) return;
+      try {
+        var body = { updated_at: new Date().toISOString() };
+        body[field] = value;
+        await sbFetch("/rest/v1/t11_rows?row_key=eq." + encodeURIComponent(rowKey), {
+          method: "PATCH",
+          prefer: "return=minimal",
+          body: body
+        });
+        rowsCache.forEach(function (rec) {
+          if (rec.row_key === rowKey) {
+            rec[field] = body[field];
+            rec.updated_at = body.updated_at;
+          }
+        });
+        if (!opts.silent) setStatus(appStatus, "已保存", "ok");
+      } catch (e) {
+        setStatus(appStatus, "保存失败：" + (e.message || e), "err");
+      }
+    }
+
+    async function loadPrefixes() {
+      var data = await sbFetch("/rest/v1/t11_rows?select=bind_prefix&visible=eq.true");
+      var set = Object.create(null);
+      (data || []).forEach(function (r) {
+        if (r && r.bind_prefix) set[r.bind_prefix] = true;
+      });
+      var list = Object.keys(set).sort();
+      bindPrefix.innerHTML = "";
+      if (!list.length) {
+        var opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "（暂无对外展示数据）";
+        bindPrefix.appendChild(opt);
+        return;
+      }
+      list.forEach(function (p) {
+        var opt = document.createElement("option");
+        opt.value = p;
+        opt.textContent = p;
+        bindPrefix.appendChild(opt);
+      });
+    }
+
+    function ensureEditCols(cols) {
+      var out = cols.slice();
+      [COL_ETA, COL_OPS, CONFIRM_COL].forEach(function (c) {
+        if (out.indexOf(c) < 0) out.push(c);
+      });
+      return out;
+    }
+
+    async function applyDisplayColumns(pre) {
+      var cfgRows = await sbFetch(
+        "/rest/v1/t11_sheet_config?bind_prefix=eq." + encodeURIComponent(pre) +
+        "&select=display_columns"
+      );
+      if (cfgRows && cfgRows[0] && Array.isArray(cfgRows[0].display_columns) &&
+          cfgRows[0].display_columns.length) {
+        COLS = ensureEditCols(cfgRows[0].display_columns.slice());
+        return;
+      }
+      var set = Object.create(null);
+      rowsCache.forEach(function (rec) {
+        Object.keys(rec.snapshot || {}).forEach(function (k) { set[k] = true; });
+      });
+      COLS = FALLBACK_COLS.filter(function (c) {
+        if (c === COL_ETA || c === COL_OPS || c === CONFIRM_COL) return true;
+        return !!set[c];
+      });
+      COLS = ensureEditCols(COLS);
+      if (!COLS.length) COLS = FALLBACK_COLS.slice();
+    }
+
+    async function clearCloudData() {
+      if (sessionRole !== "admin") {
+        setStatus(appStatus, "需要管理员密码登录才能清除云端", "err");
+        return;
+      }
+      var pre = bindPrefix.value;
+      if (!pre) {
+        setStatus(appStatus, "请先选择绑定平台", "warn");
+        return;
+      }
+      var n = rowsCache.length;
+      if (!confirm(
+        "确定删除平台「" + pre + "」的全部云端协作数据？\n\n" +
+        "当前约 " + n + " 行；此操作不可恢复。\n" +
+        "插件本地表11 不受影响，重新「推送云端」可再上传。"
+      )) return;
+      var typed = prompt("再次确认：请输入平台代码 " + pre);
+      if (typed !== pre) {
+        setStatus(appStatus, "平台代码不匹配，已取消", "warn");
+        return;
+      }
+      setStatus(appStatus, "清除中…");
+      await sbFetch("/rest/v1/t11_rows?bind_prefix=eq." + encodeURIComponent(pre), {
+        method: "DELETE",
+        prefer: "return=minimal"
+      });
+      await sbFetch("/rest/v1/t11_sheet_config?bind_prefix=eq." + encodeURIComponent(pre), {
+        method: "DELETE",
+        prefer: "return=minimal"
+      });
+      clearCellSelection();
+      await loadPrefixes();
+      await loadRows();
+      setStatus(appStatus, "已清除 " + pre + " 的云端数据", "ok");
+    }
+
+    async function loadRows() {
+      var pre = bindPrefix.value;
+      if (!pre) {
+        rowsCache = [];
+        COLS = [];
+        colFilters = Object.create(null);
+        sortState = null;
+        clearCellSelection();
+        clearConfirmSkuSel();
+        renderHead();
+        renderBody();
+        return;
+      }
+      setStatus(appStatus, "加载中…");
+      clearConfirmSkuSel();
+      rowsCache = await sbFetch(
+        "/rest/v1/t11_rows?bind_prefix=eq." + encodeURIComponent(pre) +
+        "&visible=eq.true&select=*&order=updated_at.desc"
+      ) || [];
+      await applyDisplayColumns(pre);
+      colWidths = loadWidthMap(pre);
+      colFilters = loadColFilters(pre);
+      sortState = loadSortState(pre);
+      if (sortState && COLS.indexOf(sortState.col) < 0) sortState = null;
+      invalidateDisplayRowsCache();
+      renderHead();
+      renderBody();
+      setStatus(appStatus, "共 " + rowsCache.length + " 行 · " + COLS.length + " 列（" + pre + "）", "ok");
+    }
+
+    async function initApp() {
+      ensureCfg();
+      tableWrap = document.querySelector(".table-wrap");
+      if (tableWrap && !tableWrap._virtualScrollBound) {
+        tableWrap._virtualScrollBound = true;
+        tableWrap.addEventListener("scroll", function () {
+          if (confirmSkuDragAnchor || confirmSkuSelectDragging) {
+            cancelConfirmSkuDrag(true);
+          }
+          if (displayRowList().length <= VIRTUAL_THRESHOLD) return;
+          if (virtualScrollRaf) return;
+          virtualScrollRaf = requestAnimationFrame(function () {
+            virtualScrollRaf = null;
+            renderBody({ virtualOnly: true });
+          });
+        }, { passive: true });
+      }
+      await loadPrefixes();
+      await loadRows();
+    }
+
+    document.getElementById("btnGate").addEventListener("click", enterApp);
+    gatePwd.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") enterApp();
+    });
+    document.getElementById("btnReload").addEventListener("click", function () {
+      loadRows().catch(function (e) { setStatus(appStatus, e.message || String(e), "err"); });
+    });
+    if (btnClearCloud) {
+      btnClearCloud.addEventListener("click", function () {
+        clearCloudData().catch(function (e) { setStatus(appStatus, e.message || String(e), "err"); });
+      });
+    }
+    document.getElementById("btnLogout").addEventListener("click", logout);
+    bindPrefix.addEventListener("change", function () {
+      closeColFilterPop();
+      loadRows().catch(function (e) { setStatus(appStatus, e.message || String(e), "err"); });
+    });
+    searchBox.addEventListener("input", function () {
+      if (searchRenderTimer) clearTimeout(searchRenderTimer);
+      searchRenderTimer = setTimeout(function () {
+        searchRenderTimer = null;
+        renderBody();
+      }, 200);
+    });
+    if (btnClearFilters) {
+      btnClearFilters.addEventListener("click", function () {
+        clearColFilter(null);
+      });
+    }
+    if (btnFilterAll) {
+      btnFilterAll.addEventListener("click", function () {
+        if (!colFilterList) return;
+        var visibles = [];
+        colFilterList.querySelectorAll(".col-filter-item").forEach(function (lab) {
+          if (lab.hidden) return;
+          var cb = lab.querySelector("input[type=checkbox]");
+          if (cb) visibles.push(cb);
+        });
+        var allChecked = visibles.length > 0 && visibles.every(function (cb) { return cb.checked; });
+        visibles.forEach(function (cb) { cb.checked = !allChecked; });
+        syncFilterAllBtnLabel();
+      });
+    }
+    if (colFilterSearch) {
+      colFilterSearch.addEventListener("input", filterColFilterListBySearch);
+      colFilterSearch.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          applyColFilterDraft();
+        }
+        if (ev.key === "Escape") closeColFilterPop();
+      });
+    }
+    if (btnFilterOk) btnFilterOk.addEventListener("click", applyColFilterDraft);
+    if (btnFilterCancel) btnFilterCancel.addEventListener("click", closeColFilterPop);
+    if (btnClearColFilter) {
+      btnClearColFilter.addEventListener("click", function () {
+        if (filterPopCol) clearColFilter(filterPopCol);
+      });
+    }
+    document.addEventListener("mousedown", function (ev) {
+      if (!colFilterPop || colFilterPop.hidden) return;
+      if (colFilterPop.contains(ev.target)) return;
+      if (ev.target.closest && ev.target.closest(".col-filter-btn")) return;
+      closeColFilterPop();
+    });
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape" && colFilterPop && !colFilterPop.hidden) closeColFilterPop();
+    });
+    window.addEventListener("resize", function () {
+      if (filterPopAnchor && filterPopCol) positionColFilterPop(filterPopAnchor);
+    });
+
+    document.addEventListener("paste", function (ev) {
+      if (!app || app.classList.contains("hidden")) return;
+      if (!shouldBatchPasteConfirmSku()) return;
+      var text = ev.clipboardData && ev.clipboardData.getData("text/plain");
+      if (text == null) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      applyConfirmSkuPasteFromText(text);
+    }, true);
+
+    document.addEventListener("keydown", function (ev) {
+      if (!app || app.classList.contains("hidden")) return;
+      if (ev.key === "Escape") {
+        if (confirmSkuSelKeys().length) {
+          clearConfirmSkuSel();
+          clearCellSelection();
+          setStatus(appStatus, "已释放运营确认SKU选区", "ok");
+          ev.preventDefault();
+          return;
+        }
+      }
+      if (ev.key !== "Delete" && ev.key !== "Backspace") return;
+      if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+      if (!confirmSkuSelKeys().length) return;
+      var ae = document.activeElement;
+      if (ae && ae.classList && ae.classList.contains("confirm-sku-input") && !confirmSkuMultiActive()) return;
+      ev.preventDefault();
+      deleteConfirmSkuSelectionValues();
+    });
+
+    if (btnCopyFormula) {
+      btnCopyFormula.addEventListener("click", function () {
+        var text = cellFormula && cellFormula.value ? cellFormula.value : "";
+        if (!text) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            setStatus(appStatus, "已复制编辑栏内容", "ok");
+          }).catch(function () {
+            setStatus(appStatus, "复制失败", "err");
+          });
+        } else {
+          cellFormula.select();
+          try {
+            document.execCommand("copy");
+            setStatus(appStatus, "已复制编辑栏内容", "ok");
+          } catch (_) {
+            setStatus(appStatus, "复制失败", "err");
+          }
+        }
+      });
+    }
+
+    var role = readSessionRole();
+    if (role) {
+      sessionRole = role;
+      syncRoleUi();
+      showApp(true);
+      initApp().catch(function (e) {
+        logout();
+        setStatus(gateStatus, e.message || String(e), "err");
+      });
+    }
+  })();
+  </script>
+</body>
+</html>
