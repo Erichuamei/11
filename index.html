@@ -216,7 +216,7 @@
       "店铺", "店长", "采购员",
       "缺货原因", "运单号", "采购单号（准）", "采购状态", "采购添加时间",
       "物流单号", "最新物流信息", "扫描时间", "收货时间", "上架时间",
-      COL_ETA, COL_OPS, CONFIRM_COL, COL_REPLACE
+      COL_ETA, COL_OPS, COL_REPLACE, CONFIRM_COL
     ];
     var COLS = [];
     var EDIT_COLS = {
@@ -2566,15 +2566,15 @@
 
     function ensureEditCols(cols) {
       var out = cols.slice();
-      [COL_ETA, COL_OPS, CONFIRM_COL, COL_REPLACE].forEach(function (c) {
+      [COL_ETA, COL_OPS, COL_REPLACE, CONFIRM_COL].forEach(function (c) {
         if (out.indexOf(c) < 0) out.push(c);
       });
       return out;
     }
 
-    /** 四列协作字段固定在最右侧，顺序：到仓时间 → 运营反馈 → 确认SKU → 替换SKU */
+    /** 四列协作字段固定在最右侧，顺序：到仓时间 → 运营反馈 → 替换SKU → 确认SKU */
     function prioritizeEditCols(cols) {
-      var editCols = [COL_ETA, COL_OPS, CONFIRM_COL, COL_REPLACE];
+      var editCols = [COL_ETA, COL_OPS, COL_REPLACE, CONFIRM_COL];
       var rest = cols.filter(function (c) { return editCols.indexOf(c) < 0; });
       var edits = editCols.filter(function (c) { return cols.indexOf(c) >= 0; });
       return rest.concat(edits);
