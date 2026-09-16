@@ -1,6 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="O">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="xie">
   <rect width="32" height="32" rx="6" fill="#6b4ce6"/>
-  <text x="16" y="22.5" text-anchor="middle" fill="#ffffff"
-    font-family="'Microsoft YaHei Light','Microsoft YaHei UI','Microsoft YaHei','ฎoลั',sans-serif"
-    font-size="18" font-weight="600">O</text>
+  <text x="16" y="22" text-anchor="middle" fill="#ffffff"
+    font-family="Microsoft YaHei UI, Microsoft YaHei, sans-serif"
+    font-size="17" font-weight="600">&#x534F;</text>
 </svg>
