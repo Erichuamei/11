@@ -995,8 +995,17 @@
       Object.keys(MULTI_EDIT_COLS).forEach(function (c) { paintMultiEditCellSelectionNow(c); });
     }
 
-    function paintMultiEditCellSelection(col) {
+    function paintMultiEditCellSelection(col, force) {
+      if (force && multiEditPaintRaf) {
+        cancelAnimationFrame(multiEditPaintRaf);
+        multiEditPaintRaf = null;
+      }
       if (multiEditPaintRaf) return;
+      if (force) {
+        paintMultiEditCellSelectionNow(col || "");
+        if (col) updateFormulaBarForMultiEdit(col);
+        return;
+      }
       multiEditPaintRaf = requestAnimationFrame(function () {
         multiEditPaintRaf = null;
         paintMultiEditCellSelectionNow(col || "");
@@ -2577,8 +2586,14 @@
         trSpBot.appendChild(tdSpBot);
         tbody.appendChild(trSpBot);
       }
-      paintMultiEditCellSelection("");
-      if (!opts.virtualOnly) {
+      paintMultiEditCellSelection("", true);
+      if (opts.virtualOnly) {
+        var vReadyCol = activeMultiEditColForBatch();
+        if (vReadyCol && multiEditMultiActive(vReadyCol)) {
+          updateFormulaBarForMultiEdit(vReadyCol);
+          focusGridHideInput();
+        }
+      } else {
         if (selectedCell) {
           if (!updateFormulaBarForMultiEdit(selectedCell.col)) {
             updateFormulaBar(selectedCell.col, selectedCell.rowIndex, selectedCell.text);
@@ -2980,8 +2995,9 @@
       if (tableWrap && !tableWrap._virtualScrollBound) {
         tableWrap._virtualScrollBound = true;
         tableWrap.addEventListener("scroll", function () {
-          if (multiEditDragAnchor || multiEditSelectDragging) {
-            cancelMultiEditDrag(true);
+          /* 滚轮/滚动时不要 revert 多选（true 会把选区折回单格）；仅结束未松手的拖选 */
+          if (multiEditSelectDragging || multiEditDragAnchor) {
+            cancelMultiEditDrag(false);
           }
           if (displayRowList().length <= VIRTUAL_THRESHOLD) return;
           if (virtualScrollRaf) return;
